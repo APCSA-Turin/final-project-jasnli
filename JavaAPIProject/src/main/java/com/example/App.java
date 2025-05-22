@@ -92,6 +92,8 @@ public class App
         Character playerChar = new Character(player, env);
         System.out.println(player);
         System.out.println(playerChar);
+
+        
       
     }
 }
