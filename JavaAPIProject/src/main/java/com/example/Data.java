@@ -2,6 +2,7 @@ package com.example;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+
 public class Data {
     public Data() {}
 
@@ -67,11 +68,31 @@ public class Data {
 
     public static double valueConditions(String str) {
         String rtn = "";
+        boolean detected = false;
+        for (int i = 0; i < str.length(); i++) {
+            if (isNumeric(str.substring(i, i + 1)) || str.substring(i, i + 1).equals(".") || str.substring(i, i+1).equals("-") || str.substring(i, i+1).equals(",")) {
+                detected = true;
+                if (!str.substring(i, i+1).equals(",")) {
+                    rtn += str.substring(i, i+1);
+                }
+            }
+            else if (detected) {
+                return Double.parseDouble(rtn);
+            }
+        }
+        return Double.parseDouble(rtn);
+    }
+
+    // returns the str before the semicolon
+    public static double valueSemi(String str) {
+        String rtn = "";
         for (int i = 0; i < str.length(); i++) {
             if (isNumeric(str.substring(i, i + 1)) || str.substring(i, i + 1).equals(".") || str.substring(i, i+1).equals("-")) {
                 rtn += str.substring(i, i+1);
+            } if (str.substring(i, i+1).equals("a")) {
+                i ++;
             }
-            else {
+            if (str.substring(i, i+1).equals(";")) {
                 return Double.parseDouble(rtn);
             }
         }
