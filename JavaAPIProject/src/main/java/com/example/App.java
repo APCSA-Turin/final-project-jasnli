@@ -144,6 +144,7 @@ public class App
                 if (response.equals("y")) {
                     inCombat = true;
                     playerChar = new Character(player, new Environment());
+
                     chosen = (int) (Math.random() * 12) + 1;
                     enemy = chooseSpecies(chosen);
                     enemyChar = new Character(enemy, env);
