@@ -18,15 +18,18 @@ public class Science {
     }
 
     public static String getDegreeUnit(String str) {
-        int index = str.indexOf("C");
-        if (index >= -1) {
-            return "C";
-        } else {
-            index = str.indexOf("F");
-            if (index >= -1) {
+        for (int i = 0; i < str.length() - 1; i++) {
+            if (str.substring(i, i+1).equals("°") && str.substring(i+1, i+2).equals("C")) {
+                return "C";
+            } 
+            if (str.substring(i, i+1).equals("°") && str.substring(i+1, i+2).equals("F")) {
                 return "F";
-            }
+            } 
         }
         return "";
+    }
+
+    public static double toATM(double torr) {
+        return torr * (1/760.0);
     }
 }

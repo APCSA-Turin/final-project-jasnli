@@ -25,4 +25,7 @@ public class Environment {
         str+= "Current Atmospheric Pressure:" + atmosphere;
         return str;
     }
+
+    public double getTemperature() {return temperature;}
+    public double getPressure() {return atmosphere;}
 }

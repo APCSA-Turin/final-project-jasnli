@@ -5,18 +5,25 @@ public class Solution extends Species{
     private double pH;
     private double pKa;
     private double Ka;
+    private double originalpH;
     private double volume;
     private String acidity;
-    private boolean acidbase;
+    private String acidbase;
 
-    public Solution(int CID, double c, double v, boolean acidbase) {
-        super(CID);
-        if (acidbase) {
+    public Solution(int CID, double c, double v, String acidbase) {
+        super(CID, false);
+        if (acidbase.equals("weakAcid")) {
             pKa = Science.round((Data.valueConditions(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Dissociation+Constants")))), 2);
+            Ka = Math.pow(10, -1 * pKa);
+            updatePH();
+        } else if (acidbase.equals("weakBase")) {
+            pKa = 14.00 - Science.round((Data.valueConditions(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Dissociation+Constants")))), 2);
             Ka = Math.pow(10, -1 * pKa);
             updatePH();
         } else {
             pH = Science.round((Data.pHValue(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=pH")))), 2);
+            originalpH = pH;
+            pKa = 1;
         }
         decideAcidity();
         concentration = c;
@@ -37,6 +44,13 @@ public class Solution extends Species{
         return str;
     }
 
+    public double getConcentration() {return concentration;}
+    public double getPH() {return pH;}
+    public double getpKa() {return pKa;}
+    public double getVolume() {return volume;}
+    public double getOriginalPH() {return originalpH;}
+    public String getAcidity() {return acidity;}
+
     public void decideAcidity() {
         if (pH > 7) {
             acidity = "basic";
@@ -48,13 +62,13 @@ public class Solution extends Species{
     }
 
     public void updatePH() {
-        if (acidbase) {
+        if (acidbase.equals("weakAcid") || acidbase.equals("weakBase")) {
             pH = (pKa - Math.log10(concentration)) / 2;
         }
     }
 
     public void updatePH(double c, double v) {
-        pH = ((Math.pow(10, -1 * pH) * volume) + (c * v)) / (volume + v);
+        pH = -1 * Math.log10(((Math.pow(10, -1 * pH) * volume) + (c * v)) / (volume + v));
     }
 
     public void dilute(double addedV) {

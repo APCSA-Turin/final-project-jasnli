@@ -58,7 +58,7 @@ public class Data {
                 if (isNumeric(str.substring(i, i + 1)) || str.substring(i, i + 1).equals(".") || str.substring(i, i+1).equals("-")) {
                     rtn += str.substring(i, i+1);
                 }
-                if (str.substring(i, i+1).equals("f")) {
+                if (str.substring(i, i+1).equals("f") || (str.substring(i, i+1).equals("("))) {
                     return Double.parseDouble(rtn);
                 }
             }
