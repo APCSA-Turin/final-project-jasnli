@@ -41,15 +41,14 @@ public class Character {
     public String toString() {
         String str = "";
         str += "Health: " + health +"\n";
-        str += "Strength: " + strength;
+        str += "Strength: " + strength +"\n";
         return str;
     }
 
     // damaging & healing
     public void takeDamage(double dmg) {
         if (species.getPhase().equals("s")) {
-            dmg *= 0.70;
-            System.out.println("Since it is a solid, " + species.getName() + " takes only " + (0.70 * dmg) + " damage!");
+            dmg *= 0.80;
         }
         health -= dmg;
         if (health <= 0) {
@@ -74,22 +73,17 @@ public class Character {
 
     // moves : 
     
-
     // attack character c
     public boolean plainAttack(Character c) {
-        double dmgTaken = strength;
-        if (species.equals("g")) {
-            dmgTaken *= (environment.getTemperature() + 273.15) * 0.05;
-        }
-        c.takeDamage(dmgTaken);
-        System.out.println("You deal " + dmgTaken + " damage to " + c.getSpecies().getName());
+        c.takeDamage(strength);
+        System.out.println("You deal " + strength + " damage to " + c.getSpecies().getName());
         return true;
     }
 
 
     // s is the solution that is getting diluted
     public boolean dilution(Character c) {
-        if (species instanceof Solution && c.getSpecies() instanceof Solution) {
+        if (species instanceof Solution) {
             double addedV = ((Solution) species).getVolume() * 0.25;
             ((Solution) c.getSpecies()).dilute(addedV);
             c.updateStrength();
@@ -111,9 +105,9 @@ public class Character {
                 int randomNum = (int) (Math.random() * 2) + 1;
                 double damageTaken = species.getHeatofCombustion() * 0.08206;
                 if (randomNum == 1) {
-                    takeDamage(damageTaken * 0.70);
-                    c.takeDamage(damageTaken * 0.30);
-                    System.out.println("Incomplete Combustion! Dealt " + (damageTaken * 0.70) + " damage to self and " + (damageTaken * 0.30) + " damage to " + c.getSpecies().getName());
+                    takeDamage(damageTaken * 0.20);
+                    c.takeDamage(damageTaken * 0.80);
+                    System.out.println("Incomplete Combustion! Dealt " + (damageTaken * 0.20) + " damage to self and " + (damageTaken * 0.80) + " damage to " + c.getSpecies().getName());
                 } else {
                     c.takeDamage(damageTaken);
                     System.out.println("Complete Combustion! Dealt " + (damageTaken) + " damage to " + c.getSpecies().getName());
@@ -138,8 +132,8 @@ public class Character {
                     System.out.println("Added acid to " + c.getSpecies().getName() + " changing their pH by " + (((Solution) c.getSpecies()).getPH() - initialPH));
                     return true;
                 } else {
-                    c.takeDamage(strength * 2);
-                    System.out.println(c.getSpecies().getName() + " is not a solution, so " + c.getSpecies().getName() + " takes " + (strength * 2) + " damage");
+                    c.takeDamage(strength * 1.25);
+                    System.out.println(c.getSpecies().getName() + " is not a solution, so " + c.getSpecies().getName() + " takes " + (strength * 1.25) + " damage");
                     return true;
                 }
             } else {
@@ -164,7 +158,7 @@ public class Character {
     // pressurize
     public boolean pressurize() {
         if (species.getPhase().equals("g")) {
-            environment.deltaP(species.getVP() * 0.20);
+            environment.deltaP(species.getVP());
             System.out.println("The atmospheric pressure has increased by " + species.getVP() * 0.2 + " atm. The current pressure is " + environment.getPressure() + " atm");
             return true;
         } else {

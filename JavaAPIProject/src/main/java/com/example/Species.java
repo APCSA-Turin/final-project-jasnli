@@ -1,9 +1,13 @@
 package com.example;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import org.json.JSONException;
 
 public class Species {
-    // FORMAT https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/(CIS)/JSON?heading=(PROPERTY)
+    // FORMAT https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/(CID)/JSON?heading=(PROPERTY)
     private int CID;
     private String name;
     private double molecularWeight;
@@ -16,47 +20,96 @@ public class Species {
     private boolean combustable;
 
 
-    public Species(int CID, boolean heat) throws IOException {
+    public Species(int CID) {
         this.CID = CID;
-        combustable = heat;
         boolean success = false;
-        while (!success) {
+        int delay = 1000;
+        int attemptNumber = 0;
+
+        // initialization to blanks!
+        name = "";
+        molecularWeight = -1;
+        BP = Integer.MAX_VALUE;
+        MP = Integer.MAX_VALUE;
+        setPhase(25);;
+        heatOfCombustion = Integer.MAX_VALUE;
+        density = -1;
+        vaporPressure = -1;
+        combustable = false;
+        
+        // loop for data
+        while(!success) {
             try {
-                System.out.println("retrying");
-                Thread.sleep(500);
-            
-                name = Data.extractName(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Synonyms"));
-                molecularWeight = Data.value(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Molecular+Weight")));
-                String sBP = (Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Boiling+Point")));
-                if (Science.getDegreeUnit(sBP).equals("C")) { // checks for units
-                    BP = Science.round(Data.valueConditions(sBP), 2);
-                } else {
-                    BP = Science.round(Science.toCelsius(Data.valueConditions(sBP)), 2);
+                // in order to slow down retries
+                attemptNumber ++;
+                Thread.sleep((delay * attemptNumber));
+                if (attemptNumber > 2) {
+                    attemptNumber = 2;
                 }
-                // BP = Science.round((Data.valueConditions(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Boiling+Point")))), 2);
-                String sMP = (Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Melting+Point")));
-                if (Science.getDegreeUnit(sMP).equals("C")) {
-                    MP = Science.round(Data.valueConditions(sMP), 2);
-                } else {
-                    MP = Science.round(Science.toCelsius(Data.valueConditions(sMP)), 2);
+
+                // base URL to make it more concise
+                String baseURL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?";
+
+                // extraction for name
+                if (name.equals("")) {
+                    name = Data.extractName(Data.JSONify(baseURL + "heading=Synonyms"));
                 }
-                // MP = Science.round((Data.value(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Melting+Point")))), 2);
-                setPhase(25);
-                if (heat) {
-                    heatOfCombustion = Science.round(Data.valueConditions(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Heat+of+Combustion"))), 2);
-                    heatOfCombustion = Math.abs(heatOfCombustion);
+
+                // extraction for molecularWeight
+                if (molecularWeight == -1) {
+                    molecularWeight = Data.value(Data.extract(Data.JSONify(baseURL + "heading=Molecular+Weight")));
+                }
+
+                // extraction for boiling point
+                if (BP == Integer.MAX_VALUE) {
+                    String strBP = Data.extract(Data.JSONify(baseURL + "heading=Boiling+Point"));
+
+                    // check for units
+                    if (Science.getDegreeUnit(strBP).equals("C")) {
+                        BP = Science.round(Data.valueConditions(strBP), 2);
+                    } else {
+                        BP = Science.round(Science.toCelsius(Data.valueConditions(strBP)), 2);
+                    }
+                }
+
+                // extraction for melting point
+                if (MP == Integer.MAX_VALUE) {
+                    String strMP = Data.extract(Data.JSONify(baseURL + "heading=Melting+Point"));
+
+                    // check for units
+                    if (Science.getDegreeUnit(strMP).equals("C")) {
+                        MP = Science.round(Data.valueConditions(strMP), 2);
+                    } else {
+                        MP = Science.round(Science.toCelsius(Data.valueConditions(strMP)), 2);
+                    }
+                }
+
+                // extraction for combustion
+                boolean containsHeat = Data.checkURLResponse("heading=Heat+of+Combustion", baseURL);
+
+                if (containsHeat) {
+                    combustable = true;
+                    if (heatOfCombustion == Integer.MAX_VALUE) {
+                        heatOfCombustion = Math.abs(Science.round(Data.valueConditions(Data.extract(Data.JSONify(baseURL + "heading=Heat+of+Combustion"))), 2));
+                    } else {
+                        heatOfCombustion = 0;
+                    }
                 } else {
                     heatOfCombustion = 0;
-                } 
+                }
 
-                // density
-                density = Science.round(Data.valueConditions(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Density"))), 2);
-                // vapor pressure
-                vaporPressure = Science.round(Science.toATM(Data.valueConditions(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Vapor+Pressure")))));
-                // surface tension
+                // extraction for density
+                if (density == -1) {
+                    density = Science.round(Data.valueConditions(Data.extract(Data.JSONify(baseURL + "heading=Density"))), 2);
+                }
+
+                // extraction for vapor pressure
+                if (vaporPressure == -1) {
+                    vaporPressure = Science.round(Science.toATM(Data.valueConditions(Data.extract(Data.JSONify(baseURL + "heading=Vapor+Pressure")))));
+                }
+
                 success = true;
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -73,9 +126,14 @@ public class Species {
         str += "Phase: " + phase + "\n";
         str += "Boiling Point: " + BP + " °C\n";
         str += "Melting Point: " + MP + " °C\n";
-        str += "Density: " + density + "\n";
-        str += "Vapor Pressure: " + vaporPressure + "\n";
-        str += "Heat of Combustion: " + heatOfCombustion + "\n";
+        str += "Density: " + density + " g/L\n";
+        str += "Vapor Pressure: " + vaporPressure + " atm\n";
+        if (combustable) {
+            str += "Heat of Combustion: " + heatOfCombustion + " kJ/mol\n";
+        } else {
+            str += "Heat of Combustion: N/A\n";
+        }
+        
         return str;
     }
 

@@ -1,5 +1,10 @@
 package com.example;
 import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import org.json.JSONArray;
 
 
@@ -132,5 +137,49 @@ public class Data {
         } catch(NumberFormatException e){  
             return false;  
         }  
-}
+    }
+
+    // check if there exists a URL page on PUBChem for the info I am trying to find
+    // For Example:
+    /*
+     * Some compounds don't have pH's listed or don't have pKas listed, so I wouldn't be able to initialize those!
+     */
+    public static boolean checkURLResponse(String find, String base) {
+        // first create the variable connection
+        HttpURLConnection conn = null;
+        try {
+            // generates the URL for the connection  (with the heading of what you are trying to find)
+            URL url = new URL(base + find);
+
+            // open the connection and get the response
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            int responseCode = conn.getResponseCode();
+
+            // if there is an error, return false ; otherwise return true
+            if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                System.err.println("No " + find + " Found!");
+                return false;
+            } else {
+                System.err.println(find + " Found!");
+                return true;
+            }
+
+        // catch any exceptions just in case!
+        } catch (IOException e) {
+            System.err.println("Error! - " + find);
+            e.printStackTrace();
+            return false;
+        } finally {
+            // closes the connection
+            if (conn == null) {
+                conn.disconnect();
+            }
+        }
+
+        
+    }
 }

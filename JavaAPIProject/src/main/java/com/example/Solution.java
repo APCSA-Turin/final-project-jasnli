@@ -10,38 +10,50 @@ public class Solution extends Species{
     private double originalpH;
     private double volume;
     private String acidity;
-    private String acidbase;
 
-    public Solution(int CID, double c, double v, String acidbase) throws IOException {
-        super(CID, false);
+    public Solution(int CID, double c, double v) {
+        super(CID);
         boolean success = false;
-        this.acidbase = acidbase;
+        
+        // initialize
+        pH = -1;
+        pKa = -1;
+        Ka = -1;
+        originalpH = -1;
+        volume = v;
+        concentration = c;
+        setPhase("aq");
+        decideAcidity(); // DO LATER
+
         while (!success) {
             try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
+                Thread.sleep(1000);
+
+                // generate base URL to reduce redundancy
+                String baseURL = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?";
+
+                // extraction for pKa & Ka
+                if (pKa == -1) {
+                    if (Data.checkURLResponse("heading=Dissociation+Constants", baseURL)) {
+                        pKa = Science.round(Data.valueSemi(Data.extract(Data.JSONify(baseURL + "heading=Dissociation+Constants"))), 2);
+                        Ka = Math.pow(10, -1 * pKa);
+                    }
+                }
+                
+                // extraction for pH
+                if (pH == -1) {
+                    if (Data.checkURLResponse("heading=pH", baseURL)) {
+                        pH = Science.round(Data.pHValue(Data.extract(Data.JSONify(baseURL + "heading=pH"))), 2);
+                    }
+                }
+                
+                success = true;
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-            if (acidbase.equals("weakAcid")) {
-                pKa = Science.round((Data.valueSemi(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Dissociation+Constants")))), 2);
-                Ka = Math.pow(10, -1 * pKa);
-            } else if (acidbase.equals("weakBase")) {
-                pKa = 14.00 - Science.round((Data.valueSemi(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=Dissociation+Constants")))), 2);
-                Ka = Math.pow(10, -1 * pKa);
-            } else {
-                pKa = 1.00;
-            }
-            //pH = Science.round((Data.pHValue(Data.extract(Data.JSONify("https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/" + CID + "/JSON?heading=pH")))), 2);
-            
-            concentration = c;
-            volume = v;
-            setPhase("aq");
-            updatePH();
-            originalpH = pH;
-            decideAcidity();
-            success = true;
         }
-        
+        decideAcidity();
+        updatePH();
     }
 
     // print method

@@ -107,7 +107,6 @@ public class App
                 }
                 successful = makeMove(move, playerChar, enemyChar, env);
                 move = 0;
-                System.out.println("fix");;
             }
             playerChar.endTurn();
             System.out.println("----------------------");
@@ -144,7 +143,6 @@ public class App
                 if (response.equals("y")) {
                     inCombat = true;
                     playerChar = new Character(player, new Environment());
-
                     chosen = (int) (Math.random() * 12) + 1;
                     enemy = chooseSpecies(chosen);
                     enemyChar = new Character(enemy, env);
@@ -175,20 +173,20 @@ public class App
     }
 
     public static Species chooseSpecies(int num) throws IOException {
-        Species player = new Species(783, false);
+        Species player = new Species(783);
         int chosen = num;
-        if (chosen == 1) {player = new Species(783, false);}
-        if (chosen == 2) {player = new Species(977, false);}
-        if (chosen == 3) {player = new Species(	5360545, false);}
-        if (chosen == 4) {player = new Species(24526, false);}
-        if (chosen == 5) {player = new Species(807, false);}
-        if (chosen == 6) {player = new Species(702, true);}
-        if (chosen == 7) {player = new Species(356, true);}
-        if (chosen == 8) {player = new Species(	180, true);}
-        if (chosen == 9) {player = new Species(962, false);}
-        if (chosen == 10) {player = new Solution(176, 1.0, 1.0, "weakAcid");}
-        if (chosen == 11) {player = new Solution(24530, 1.0, 1.0, "weakAcid");}
-        if (chosen == 12) {player = new Solution(402, 1.0, 1.0, "weakAcid");}
+        if (chosen == 1) {player = new Species(783);}
+        if (chosen == 2) {player = new Species(977);}
+        if (chosen == 3) {player = new Species(	5360545);}
+        if (chosen == 4) {player = new Species(24526);}
+        if (chosen == 5) {player = new Species(807);}
+        if (chosen == 6) {player = new Species(702);}
+        if (chosen == 7) {player = new Species(356);}
+        if (chosen == 8) {player = new Species(	180);}
+        if (chosen == 9) {player = new Species(962);}
+        if (chosen == 10) {player = new Solution(176, 1.0, 1.0);}
+        if (chosen == 11) {player = new Solution(24530, 1.0, 1.0);}
+        if (chosen == 12) {player = new Solution(402, 1.0, 1.0);}
         return player;
     }
 
