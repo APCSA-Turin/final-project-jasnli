@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
+import javax.swing.JProgressBar;
 
 public class GUI{
     // The window in which my project will be in...
@@ -43,7 +44,7 @@ public class GUI{
         mainScreen.add(createElementsPanel(), "elementSelection");
         mainScreen.add(createCompoundsPanel(), "compoundSelection");
         mainScreen.add(createSolutionsPanel(), "solutionSelection");
-
+        mainScreen.add(createBattlePanel(), "GameMenu");
         // Adding the mainScreen to the frame
         frame.add(mainScreen);
         frame.setLocationRelativeTo(null);
@@ -96,7 +97,7 @@ public class GUI{
         currentSelection.setLocation(200, 200);
         currentSelection.setSize(currentSelection.getPreferredSize());
 
-        // buttons
+        // selection buttons
         JButton elements = new JButton("Elements");
         JButton compounds =  new JButton("Compounds");
         JButton solutions = new JButton("Solutions");
@@ -105,12 +106,17 @@ public class GUI{
         JButton back = new JButton("Back");
         back.setBounds(0, 0, 100, 100);
 
+        // start game button
+        JButton start = new JButton("Start Game");
+        start.setBounds(0,100, 100, 100);
+
         // add text to the border panel
         panel.add(titleText, BorderLayout.NORTH);
 
         // add button to the position panel
         positionPanel.add(back);
         positionPanel.add(currentSelection);
+        positionPanel.add(start);
 
         // add buttons to the grid panel
         gridPanel.add(elements);
@@ -147,6 +153,32 @@ public class GUI{
         back.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(mainScreen, "StartMenu");
+            }
+        });
+
+        // start game button
+        start.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (player != null) {
+                    cardLayout.show(mainScreen, "GameMenu");
+                } else {
+                    currentSelection.setText("You need to make a selection first!");
+                    currentSelection.setSize(currentSelection.getPreferredSize());
+                    // wait 2.5s
+                    Timer t = (new Timer(2500, new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (currentSelection.getText().equals("You need to make a selection first!")) {
+                                currentSelection.setText("No Current Selection");
+                                currentSelection.setSize(currentSelection.getPreferredSize());
+                            }                      
+                        }
+                    }));   
+                    t.setRepeats(false);
+                    t.start();
+                    // changes the text back
+                }
+                
             }
         });
 
@@ -373,11 +405,56 @@ public class GUI{
 
     }
 
+    private JPanel createBattlePanel() {
+        // Main Frame for Battle
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // Left Panel
+        JPanel leftStats = new JPanel(new GridLayout(1, 1));
+
+        // Right Panel
+        JPanel rightStats = new JPanel(new GridLayout(1, 1));
+
+        // Health Bar
+        JProgressBar playerHP = new JProgressBar(0,100);
+        playerHP.setValue(100);
+
+        // Bottom Panel
+        JPanel bottomPanel = new JPanel(new GridLayout(2, 1));
+        JPanel healthPanel = new JPanel(new GridLayout(1, 1));
+        JPanel attackPanel = new JPanel(new GridLayout(2, 3));
+
+        // Bottom Panel Buttons
+        JButton basicAttack = new JButton("Basic Collision");
+        JButton dilute = new JButton("Dilute");
+        JButton combust = new JButton("Combust");
+        JButton pressurize = new JButton("Pressurize");
+        JButton acidify = new JButton("Acidify");
+
+        // Button Functionality
+
+        // Adding to the Bottom Panel
+        healthPanel.add(playerHP);
+        bottomPanel.add(healthPanel);
+        bottomPanel.add(attackPanel);
+
+        // Middle Panel w/ Images
+        JPanel middlePanel = new JPanel(null);
+
+        // Adding Panels to the Main Panel
+        panel.add(leftStats, BorderLayout.WEST);
+        panel.add(rightStats, BorderLayout.EAST);
+        panel.add(attackPanel, BorderLayout.SOUTH);
+        panel.add(middlePanel, BorderLayout.CENTER);
+
+        return panel;
+    }
+
     // Method that updates the text of current selection
     private void updateCurrentSelection() {
         if (currentSelection != null) {
             if (player == null) {
-                currentSelection.setText("No Current Selection");
+                currentSelection.setText("No Current Selection!");
             } else {
                 currentSelection.setText("<html>Current Selection: <b>" + player.getSpecies().getName() +
                 "</b><br>Stats:<br>" + player.getSpecies().toString().replaceAll("\n", "<br>") + "</html>");
@@ -386,6 +463,24 @@ public class GUI{
         currentSelection.setSize(currentSelection.getPreferredSize());
     }
 
+    private void generateEnemy() {
+        int chosen = (int) (Math.random() * 12) + 1;
+        Species s = null;
+        if (chosen == 1) {s = new Species(783);}
+        if (chosen == 2) {s = new Species(977);}
+        if (chosen == 3) {s = new Species(	5360545);}
+        if (chosen == 4) {s = new Species(24526);}
+        if (chosen == 5) {s = new Species(807);}
+        if (chosen == 6) {s = new Species(702);}
+        if (chosen == 7) {s = new Species(356);}
+        if (chosen == 8) {s = new Species(	180);}
+        if (chosen == 9) {s = new Species(962);}
+        if (chosen == 10) {s = new Solution(176, 1.0, 1.0);}
+        if (chosen == 11) {s = new Solution(24530, 1.0, 1.0);}
+        if (chosen == 12) {s = new Solution(402, 1.0, 1.0);}
+        Character c = new Character(s, environment);
+        opponent = c;
+    }
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             new GUI();

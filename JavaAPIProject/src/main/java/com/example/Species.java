@@ -31,7 +31,6 @@ public class Species {
         molecularWeight = -1;
         BP = Integer.MAX_VALUE;
         MP = Integer.MAX_VALUE;
-        setPhase(25);;
         heatOfCombustion = Integer.MAX_VALUE;
         density = -1;
         vaporPressure = -1;
@@ -112,8 +111,10 @@ public class Species {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            setPhase(25);
         }
     }
+
 
     // detailed information
     public String toString() {
@@ -153,6 +154,8 @@ public class Species {
 
     // phase setting
     public void setPhase(double currentTemp) {
+        System.out.println(currentTemp);
+        System.out.println(MP);
         if (currentTemp < MP) {
             phase = "s";
         } if (currentTemp > MP && currentTemp < BP) {
