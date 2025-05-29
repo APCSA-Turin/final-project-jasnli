@@ -37,6 +37,7 @@ public class Solution extends Species{
                     if (Data.checkURLResponse("heading=Dissociation+Constants", baseURL)) {
                         pKa = Science.round(Data.valueSemi(Data.extract(Data.JSONify(baseURL + "heading=Dissociation+Constants"))), 2);
                         Ka = Math.pow(10, -1 * pKa);
+                        updatePH();
                     }
                 }
                 
@@ -52,8 +53,8 @@ public class Solution extends Species{
                 e.printStackTrace();
             }
         }
+        originalpH = pH;
         decideAcidity();
-        updatePH();
     }
 
     // print method
