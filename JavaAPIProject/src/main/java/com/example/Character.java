@@ -34,14 +34,15 @@ public class Character {
     
 
     // getter
+    public double getMaxHealth() {return maxHealth;}
     public Species getSpecies() {return species;}
     public double getHealth() {return health;}
     public double getStrength() {return strength;}
 
     public String toString() {
         String str = "";
-        str += "Health: " + health +"\n";
-        str += "Strength: " + strength +"\n";
+        str += "Health: " + Science.round(health, 2) +"\n";
+        str += "Strength: " + Science.round(strength, 2) +"\n";
         return str;
     }
 
@@ -76,48 +77,51 @@ public class Character {
     // attack character c
     public boolean plainAttack(Character c) {
         c.takeDamage(strength);
-        System.out.println("You deal " + strength + " damage to " + c.getSpecies().getName());
+        // System.out.println("You deal " + strength + " damage to " + c.getSpecies().getName());
         return true;
     }
 
 
     // s is the solution that is getting diluted
     public boolean dilution(Character c) {
-        if (species instanceof Solution) {
+        if (species instanceof Solution && c.getSpecies() instanceof Solution) {
             double addedV = ((Solution) species).getVolume() * 0.25;
             ((Solution) c.getSpecies()).dilute(addedV);
             c.updateStrength();
             ((Solution) species).dilute(-1 * addedV);
             updateStrength();
-            System.out.println("This solution has diluted the other solution with " + addedV + " L of solution, lowering their strength and increasing our strength!");
-            System.out.println("New Strength: " + strength);
-            System.out.println("New Concentration: " + ((Solution) species).getConcentration());
+            // System.out.println("This solution has diluted the other solution with " + addedV + " L of solution, lowering their strength and increasing our strength!");
+            // System.out.println("New Strength: " + strength);
+            // System.out.println("New Concentration: " + ((Solution) species).getConcentration());
             return true;
         } else {
-            System.out.println("This method is ineffective since " + species.getName() + " is not a solution!");
+            // System.out.println("This method is ineffective since " + species.getName() + " is not a solution!");
             return false;
         }
     } 
 
     // combustion, s is the one taking the combustion
-    public boolean combust(Character c, Environment e) {
+    public int combust(Character c, Environment e) {
         if (species.combustable()) {
+                int rtn = 0;
                 int randomNum = (int) (Math.random() * 2) + 1;
                 double damageTaken = species.getHeatofCombustion() * 0.08206;
                 if (randomNum == 1) {
                     takeDamage(damageTaken * 0.20);
                     c.takeDamage(damageTaken * 0.80);
-                    System.out.println("Incomplete Combustion! Dealt " + (damageTaken * 0.20) + " damage to self and " + (damageTaken * 0.80) + " damage to " + c.getSpecies().getName());
+                    // System.out.println("Incomplete Combustion! Dealt " + (damageTaken * 0.20) + " damage to self and " + (damageTaken * 0.80) + " damage to " + c.getSpecies().getName());
+                    rtn = 1;
                 } else {
                     c.takeDamage(damageTaken);
-                    System.out.println("Complete Combustion! Dealt " + (damageTaken) + " damage to " + c.getSpecies().getName());
+                    // System.out.println("Complete Combustion! Dealt " + (damageTaken) + " damage to " + c.getSpecies().getName());
+                    rtn = 2;
                 }
                 e.deltaT(species.getHeatofCombustion() / (41.8)); 
-                System.out.println("The temperature has increased by " + (species.getHeatofCombustion() / (41.8)) + ", the current temperature is " + environment.getTemperature() + "°C.");
-                return true;
+                // System.out.println("The temperature has increased by " + (species.getHeatofCombustion() / (41.8)) + ", the current temperature is " + environment.getTemperature() + "°C.");
+                return rtn;
         } else {
-            System.out.println("This solution cannot be combusted!");
-            return false;
+            // System.out.println("This solution cannot be combusted!");
+            return 0;
         }
     }
 
@@ -129,11 +133,11 @@ public class Character {
                 if (c.getSpecies() instanceof Solution) {
                     double initialPH = ((Solution) c.getSpecies()).getPH();
                     ((Solution) c.getSpecies()).updatePH(1/((Solution) species).getpKa(), 0.1); 
-                    System.out.println("Added acid to " + c.getSpecies().getName() + " changing their pH by " + (((Solution) c.getSpecies()).getPH() - initialPH));
+                    // System.out.println("Added acid to " + c.getSpecies().getName() + " changing their pH by " + (((Solution) c.getSpecies()).getPH() - initialPH));
                     return true;
                 } else {
                     c.takeDamage(strength * 1.25);
-                    System.out.println(c.getSpecies().getName() + " is not a solution, so " + c.getSpecies().getName() + " takes " + (strength * 1.25) + " damage");
+                    // System.out.println(c.getSpecies().getName() + " is not a solution, so " + c.getSpecies().getName() + " takes " + (strength * 1.25) + " damage");
                     return true;
                 }
             } else {
@@ -141,16 +145,16 @@ public class Character {
                 if (c.getSpecies() instanceof Solution) {
                     double initialPH = ((Solution) c.getSpecies()).getPH();
                     ((Solution) c.getSpecies()).updatePH(-1/((Solution) species).getpKa(), 0.1); 
-                    System.out.println("Added base to " + c.getSpecies().getName() + " changing their pH by " + (((Solution) c.getSpecies()).getPH() - initialPH));
+                    // System.out.println("Added base to " + c.getSpecies().getName() + " changing their pH by " + (((Solution) c.getSpecies()).getPH() - initialPH));
                     return true;
                 } else {
-                    c.takeDamage(strength * 1.25);
-                    System.out.println(c.getSpecies().getName() + " is not a solution, so " + c.getSpecies().getName() + " takes " + (strength * 1.25) + " damage");
+                    c.takeDamage(strength * 2);
+                    // System.out.println(c.getSpecies().getName() + " is not a solution, so " + c.getSpecies().getName() + " takes " + (strength * 2) + " damage");
                     return true;
                 }
             }
         } else {
-            System.out.println(species.getName() + " is not a solution, you cannot use this move!");
+            // System.out.println(species.getName() + " is not a solution, you cannot use this move!");
             return false;
         }
     }
@@ -159,7 +163,7 @@ public class Character {
     public boolean pressurize() {
         if (species.getPhase().equals("g")) {
             environment.deltaP(species.getVP());
-            System.out.println("The atmospheric pressure has increased by " + species.getVP() * 0.2 + " atm. The current pressure is " + environment.getPressure() + " atm");
+            // System.out.println("The atmospheric pressure has increased by " + species.getVP() * 0.2 + " atm. The current pressure is " + environment.getPressure() + " atm");
             return true;
         } else {
             return false;
@@ -167,17 +171,23 @@ public class Character {
     }
 
     // end turn
-    public void endTurn() {
+    public String endTurn() {
         updateStatus();
         updateStrength();
+        String str = "";
         if (species.getPhase().equals("g")) {
             takeDamage(Math.abs(environment.getPressure() - 1.0) * species.getMolecularWeight() * 0.5);
-            System.out.println(Science.round((Math.abs(environment.getPressure() - 1.0) * species.getMolecularWeight() * 0.52), 2) + " damage was taken from the atmospheric pressure!");
+            str += species.getName() + " took " + Science.round((Math.abs(environment.getPressure() - 1.0) * species.getMolecularWeight() * 0.52), 2) + " damage from the atmospheric pressure!\n";
         }
         if (species instanceof Solution) {
+            double originalHP = health;
             takeDamage(Math.abs((((Solution) species).getOriginalPH() - ((Solution) species).getPH())) * ((Solution) species).getConcentration() * ((Solution) species).getpKa());
-            System.out.println(Science.round((Math.abs((((Solution) species).getOriginalPH() - ((Solution) species).getPH())) * ((Solution) species).getConcentration() * ((Solution) species).getpKa()), 2) + " damage was taken from the pH imbalance!");
+            str += species.getName() + " took " + Science.round(originalHP - health, 2) + " damage from the pH imbalance!";
         }
+        if (str.equals("")) {
+            str = "No damage was taken by " + species.getName() + " from a pH imbalance nor atmospheric pressure";
+        }
+        return str;
 
     }
 
