@@ -21,8 +21,8 @@ public class Environment {
 
     public String toString() {
         String str = "";
-        str+= "Current Temperature: " + temperature;
-        str+= "Current Atmospheric Pressure:" + atmosphere;
+        str+= "Current Temperature: " + temperature + "°C\n";
+        str+= "Current Atmospheric Pressure: " + atmosphere + " atm";
         return str;
     }
 
