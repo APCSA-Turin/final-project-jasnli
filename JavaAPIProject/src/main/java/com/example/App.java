@@ -199,7 +199,7 @@ public class App
             successfulMove = c1.dilution(c2);
         }
         if (moveNum == 3) {
-            successfulMove = c1.combust(c2, env);
+            successfulMove = c1.combust(c2, env) != 0;
         }
         if (moveNum == 4) {
             successfulMove = c1.pressurize();
