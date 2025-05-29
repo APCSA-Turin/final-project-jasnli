@@ -154,8 +154,6 @@ public class Species {
 
     // phase setting
     public void setPhase(double currentTemp) {
-        System.out.println(currentTemp);
-        System.out.println(MP);
         if (currentTemp < MP) {
             phase = "s";
         } if (currentTemp > MP && currentTemp < BP) {
