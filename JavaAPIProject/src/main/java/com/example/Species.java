@@ -35,13 +35,15 @@ public class Species {
         density = -1;
         vaporPressure = -1;
         combustable = false;
-        
+        setPhase(25);
+
         // loop for data
         while(!success) {
             try {
                 // in order to slow down retries
                 attemptNumber ++;
-                Thread.sleep((delay * attemptNumber));
+                // delay max at 2 seconds
+                Thread.sleep(delay * attemptNumber);
                 if (attemptNumber > 2) {
                     attemptNumber = 2;
                 }
@@ -109,9 +111,15 @@ public class Species {
 
                 success = true;
             } catch (Exception e) {
-                e.printStackTrace();
+                // For any exception, just print a message and retry
+                System.out.println("Error occurred: " + (e.getMessage() != null ? e.getMessage() : "Unknown error"));
+                if (e.getMessage() != null && e.getMessage().contains("503")) {
+                    System.out.println("503 error!");
+                } else {
+                    System.out.println("Other error!");
+                    e.printStackTrace();
+                }     
             }
-            setPhase(25);
         }
     }
 
