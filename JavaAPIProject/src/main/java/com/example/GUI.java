@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class GUI{
     // The window in which my project will be in...
@@ -21,7 +22,7 @@ public class GUI{
     private JLabel playerStatistics; // displays the player's stats
     private JLabel enemyStatistics; // displays the enemy's stats
     private JLabel moveUsed; // to show the moves used and its effects
-    
+    private JLabel gameOverText;
 
     // health bar that can be accessed anywhere in this class
     private JProgressBar playerHP;
@@ -33,7 +34,20 @@ public class GUI{
     private Character opponent;
 
     // turns
-    private boolean isPlayerTurn;
+    private boolean isPlayerTurn; // decides who's turn it is
+
+    // save & load
+    private boolean statAdded;
+    private int currentWins;
+    private int currentLosses;
+    private double winRate;
+
+    // element use frequency data
+    private String[][] elementUsage;
+
+    // stats screen
+    private JTable statsTable = new JTable();
+    private JTable freqTable = new JTable();
 
     // timer
     Timer timer;
@@ -45,6 +59,9 @@ public class GUI{
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 900);
 
+        // Loading Former Stats
+        loadStats();
+
         // Creating the Main Panel (Start Screen)
         cardLayout = new CardLayout();
         mainScreen = new JPanel(cardLayout);
@@ -52,10 +69,12 @@ public class GUI{
         // Creating Empty Statistics
         playerStatistics = new JLabel();
         enemyStatistics = new JLabel();
+        statAdded = false;
 
         // Adding different pages to my cardLayout
         mainScreen.add(createStartScreen(), "StartMenu");
         mainScreen.add(createSelectionScreen(), "SelectionScreen");
+        mainScreen.add(createStatsPanel(), "StatsScreen");
 
         // Initializing game elements
         environment = new Environment();
@@ -67,6 +86,9 @@ public class GUI{
         mainScreen.add(createSolutionsPanel(), "solutionSelection");
         mainScreen.add(createBattlePanel(), "GameMenu");
 
+        // Creation of the Game Over Screen
+        mainScreen.add(createGameOverPanel(), "GameOver");
+
         // Adding the mainScreen to the frame
         frame.add(mainScreen);
         frame.setLocationRelativeTo(null);
@@ -77,31 +99,52 @@ public class GUI{
             public void actionPerformed(ActionEvent e) {
                 updateHealth();
                 updateStats();
+                updateTable();
+                updateElementUsage();
+                checkGameOver();
+                loadStats();
             }
         });
     }
 
     // Method for Creating the Start Menu
     private JPanel createStartScreen() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new GridLayout(2, 1));
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2));
 
         // text for display
-        JLabel titleText = new JLabel("Welcome to the Chemistry Game!");
-        titleText.setFont(new Font("Helvetica", Font.BOLD, 48));
-        panel.add(titleText, BorderLayout.CENTER);
+        JLabel titleText = new JLabel("Welcome to the Chemistry Game!", SwingConstants.CENTER);
+        titleText.setFont(new Font("Calibri", Font.BOLD, 64));
+        panel.add(titleText);
 
         // start button
         JButton startButton = new JButton("Start");
-        panel.add(startButton, BorderLayout.SOUTH);
+        startButton.setFont(new Font("Impact", Font.BOLD, 48));
+        buttonPanel.add(startButton, Component.CENTER_ALIGNMENT);
 
         // the functionality of the button
         startButton.addActionListener(new ActionListener() {
-            // if the button is pressed, go to the next screen
+            // if the button is pressed, go to the selection screen
             public void actionPerformed(ActionEvent e) {
                 cardLayout.show(mainScreen, "SelectionScreen");
             }
         });
 
+        // stats button
+        JButton statButton = new JButton("Player Statistics");
+        statButton.setFont(new Font("Impact", Font.BOLD, 48));
+        buttonPanel.add(statButton, Component.CENTER_ALIGNMENT);
+
+        // the functionality of the button
+        statButton.addActionListener(new ActionListener() {
+            // if the button is pressed, go to the stat screen
+            public void actionPerformed(ActionEvent e) {
+                cardLayout.show(mainScreen, "StatsScreen");
+            }
+        });
+
+        // add the button panel to the main panel
+        panel.add(buttonPanel);
         return panel;
     }
 
@@ -118,11 +161,12 @@ public class GUI{
 
         // text for the selection display
         JLabel titleText = new JLabel("Select Your Category", SwingConstants.CENTER);
-        titleText.setFont(new Font("Helvetica", Font.PLAIN, 48));
+        titleText.setFont(new Font("Calibri", Font.PLAIN, 48));
         titleText.setForeground(Color.BLACK);
 
         // text for the current selection chosen 
         currentSelection = new JLabel("No Current Selection!", SwingConstants.RIGHT);
+        currentSelection.setFont(new Font("Cambria Math", Font.PLAIN, 20));
         currentSelection.setLocation(200, 200);
         currentSelection.setSize(currentSelection.getPreferredSize());
 
@@ -133,10 +177,12 @@ public class GUI{
 
         // back button 
         JButton back = new JButton("Back");
+        back.setFont(new Font("Calibri", Font.PLAIN, 24));
         back.setBounds(0, 0, 100, 100);
 
         // start game button
         JButton start = new JButton("Start Game");
+        start.setFont(new Font("Calibri", Font.PLAIN, 24));
         start.setBounds(0,100, 100, 100);
 
         // add text to the border panel
@@ -192,6 +238,10 @@ public class GUI{
                     playerStatistics.setText("<html> Player Atomic Statistics <br>" + player.getSpecies().toString().replace("\n", "<br>") + "<br>" + "---------<br>Player Combat Stats: <br>" + player.toString().replace("\n", "<br>") + "</html");
                     cardLayout.show(mainScreen, "GameMenu");
                     
+                    // add one count to this element usage
+                    String elementName = player.getSpecies().getName().replaceAll(" ", "");
+                    FileSaver.addElementUse(elementName, FileLoader.frequency(elementName) + 1);
+
                     timer.start();
                 } else {
                     currentSelection.setText("You need to make a selection first!");
@@ -220,6 +270,7 @@ public class GUI{
 
     // Method for Creating the Selection Screen for Elements
     private JPanel createElementsPanel() {
+        // main panel for selecting elements
         JPanel panel = new JPanel(new GridLayout(2, 1));
 
         // create the selection grid
@@ -293,7 +344,7 @@ public class GUI{
 
         // text for the selection panel
         JLabel text = new JLabel("Select your Element", SwingConstants.CENTER);
-        text.setFont(new Font("Helvetica", Font.PLAIN, 48));
+        text.setFont(new Font("Calibri", Font.PLAIN, 48));
 
         // add the selection grid to the panel
         panel.add(text);
@@ -305,6 +356,7 @@ public class GUI{
 
     // Method for Creating the Selection Screen for Elements
     private JPanel createCompoundsPanel() {
+        // main panel for selecting compounds
         JPanel panel = new JPanel(new GridLayout(2, 1));
 
         // create the selection grid
@@ -366,7 +418,7 @@ public class GUI{
 
         // text for the selection panel
         JLabel text = new JLabel("Select your Element", SwingConstants.CENTER);
-        text.setFont(new Font("Helvetica", Font.PLAIN, 48));
+        text.setFont(new Font("Calibri", Font.PLAIN, 48));
 
         // add the selection grid to the panel
         panel.add(text);
@@ -378,6 +430,7 @@ public class GUI{
 
     // Method for Creating the Selection Screen for Elements
     private JPanel createSolutionsPanel() {
+        // main panel for selecting solutions
         JPanel panel = new JPanel(new GridLayout(2, 1));
 
         // create the selection grid
@@ -427,7 +480,7 @@ public class GUI{
 
         // text for the selection panel
         JLabel text = new JLabel("Select your Element", SwingConstants.CENTER);
-        text.setFont(new Font("Helvetica", Font.PLAIN, 48));
+        text.setFont(new Font("Calibri", Font.PLAIN, 48));
 
         // add the selection grid to the panel
         panel.add(text);
@@ -448,6 +501,7 @@ public class GUI{
         enemyHP.setForeground(Color.RED);
         enemyHP.setValue(100);
         JLabel textEnemyHealth = new JLabel("Enemy Health");
+        textEnemyHealth.setFont(new Font("Impact", Font.PLAIN, 20));
 
         // Left Panel
         JPanel leftStats = new JPanel();
@@ -474,7 +528,9 @@ public class GUI{
 
         // Bottom Panel
         JLabel textPlayerHealth = new JLabel("Player Health");
+        textPlayerHealth.setFont(new Font("Impact", Font.PLAIN, 20));
         moveUsed = new JLabel("Click a move to use it!");
+        moveUsed.setFont(new Font("Cambria Math", Font.PLAIN, 14));
         JPanel bottomPanel = new JPanel(new GridLayout(4, 1));
         JPanel healthPanel = new JPanel(new GridLayout(1, 1));
         JPanel attackPanel = new JPanel(new GridLayout(2, 3));
@@ -584,6 +640,84 @@ public class GUI{
         panel.add(rightStats, BorderLayout.EAST);
         panel.add(bottomPanel, BorderLayout.SOUTH);
         panel.add(middlePanel, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    // Method for Creating the Game Over Screen
+    private JPanel createGameOverPanel() {
+        // main panel for game over screen
+        JPanel panel = new JPanel(new GridLayout(2, 1));
+
+        // text to display victory/loss
+        gameOverText = new JLabel("", SwingConstants.CENTER);
+        gameOverText.setFont(new Font("Calibri", Font.BOLD, 82));
+        
+        // replay button
+        JButton replay = new JButton("Replay!");
+        replay.setFont(new Font("Times New Roman", Font.PLAIN, 48));
+
+        // replay button functionality
+        replay.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                environment = new Environment();
+                generateEnemy();
+                player = new Character(new Species(player.getSpecies().getCID()), environment);
+                isPlayerTurn = true;
+                statAdded = false;
+                cardLayout.show(mainScreen, "SelectionScreen");
+            }
+        });
+
+        // add all components to the main panel
+        panel.add(gameOverText, SwingConstants.CENTER);
+        panel.add(replay, Component.CENTER_ALIGNMENT);
+
+        // return the panel
+        return panel;
+    }
+
+    // Method for Creating the Stats Page
+    private JPanel createStatsPanel() {
+        // main panel for stats screen
+        JPanel panel = new JPanel(new GridLayout(3, 1));
+        
+
+        // name of columns
+        String[] columnNames = {"Stats", "Value"};
+
+        // stats table data
+        String[][] data = {
+        {"Total Wins", Integer.toString(currentWins)}, 
+        {"Total Losses", Integer.toString(currentLosses)},
+        {"Winrate", Double.toString(winRate) + "%"}
+        };
+
+        // create the stats table
+        statsTable = new JTable(data, columnNames);
+        statsTable.setFillsViewportHeight(true);
+        statsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        JScrollPane scrollPane = new JScrollPane(statsTable);
+
+        // freq table data
+        loadElementUsage();
+        freqTable.setFillsViewportHeight(true);
+        freqTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        JScrollPane freqPane = new JScrollPane(freqTable);
+
+        // back button
+        JButton back = new JButton("Back");
+        back.setFont(new Font("Calibri", Font.PLAIN, 24));
+        back.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                cardLayout.show(mainScreen, "StartMenu");
+            }
+        });
+
+        // add the table to the panel
+        panel.add(scrollPane);
+        panel.add(freqPane);
+        panel.add(back);
 
         return panel;
     }
@@ -788,7 +922,7 @@ public class GUI{
 
             // check for success
             if (rtn == 1) {
-                moveUsed.setText("<html>" + "You used incomplete combustion, dealing " + (playerHealth - player.getHealth()) + " damage to yourself and " + (enemyHealth - opponent.getHealth()) + " damage to" + opponent.getSpecies().getName() + "!" +
+                moveUsed.setText("<html>" + "You used incomplete combustion, dealing " + (playerHealth - player.getHealth()) + " damage to yourself and " + (enemyHealth - opponent.getHealth()) + " damage to " + opponent.getSpecies().getName() + "!" +
                 "<br>The temperature has increased by " + (environment.getTemperature() - initialT) + "°C" + "</html>");
             }
             if (rtn == 2) {
@@ -858,6 +992,87 @@ public class GUI{
         enemyStatistics.setSize(enemyStatistics.getPreferredSize());
         environmentText.setText("<html>" + environment.toString().replace("\n", "<br>") + "</html>");
         environmentText.setSize(environmentText.getPreferredSize());
+    }
+
+    // Check for Loss
+    private void checkGameOver() {
+        if (player.getHealth() == 0) { 
+            gameOverText.setText("You Lose!");
+            cardLayout.show(mainScreen, "GameOver");
+            if (!statAdded) {
+                FileSaver.addWin(currentWins, currentLosses + 1);
+                
+                statAdded = true;
+            }
+        } 
+        if (opponent.getHealth() == 0) {
+            gameOverText.setText("You Win!");
+            cardLayout.show(mainScreen, "GameOver");
+            if (!statAdded) {
+                FileSaver.addWin(currentWins + 1, currentLosses);
+                statAdded = true;
+            }
+        }
+    }
+
+    // Calculate & Load Statistics for Win & Losses
+    private void loadStats() {
+        // Load the current stats first
+        currentWins = FileLoader.getStats()[0];
+        currentLosses = FileLoader.getStats()[1];
+
+        // Get the Total Games
+        int total = currentWins + currentLosses;
+
+        // Calculate the Winrate
+        winRate = (currentWins/(double) total) * 100;
+        winRate = Science.round(winRate, 2);
+
+    }
+    
+    // Updates the Stats Table
+    private void updateTable() {
+        statsTable.setValueAt(Integer.toString(currentWins), 0, 1);
+        statsTable.setValueAt(Integer.toString(currentLosses), 1, 1);
+        statsTable.setValueAt(Double.toString(winRate) + "%", 2, 1);
+    }
+    
+    // Gets the Usage of All the Elements
+    private void loadElementUsage() {
+        // load the usage
+        String[][] usage = {
+            {"Hydrogen", Integer.toString(FileLoader.frequency("Hydrogen"))},
+            {"Oxygen", Integer.toString(FileLoader.frequency("Oxygen"))},
+            {"Sodium", Integer.toString(FileLoader.frequency("Sodium"))},
+            {"Chlorine", Integer.toString(FileLoader.frequency("Chlorine"))},
+            {"Iodine", Integer.toString(FileLoader.frequency("Iodine"))},
+            {"Ethanol", Integer.toString(FileLoader.frequency("Ethanol"))},
+            {"Octane", Integer.toString(FileLoader.frequency("Octane"))},
+            {"Acetone", Integer.toString(FileLoader.frequency("Acetone"))},
+            {"Water", Integer.toString(FileLoader.frequency("Water"))},
+            {"AceticAcid", Integer.toString(FileLoader.frequency("AceticAcid"))},
+            {"HydrazoicAcid", Integer.toString(FileLoader.frequency("HydrazoicAcid"))},
+            {"HydrosulfuricAcid", Integer.toString(FileLoader.frequency("HydrosulfuricAcid"))}
+        }; 
+
+        // initialize freq table
+        freqTable = new JTable(usage, new String[]{"Element", "Uses"});
+    }
+
+    private void updateElementUsage() {
+        // update the values (I did not want to make a new JTable everytime, so)
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Hydrogen")), 0, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Oxygen")), 1, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Sodium")), 2, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Chlorine")), 3, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Iodine")), 4, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Ethanol")), 5, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Octane")), 6, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Acetone")), 7, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Water")), 8, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("AceticAcid")), 9, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("HydrazoicAcid")), 10, 1);
+        freqTable.setValueAt(Integer.toString(FileLoader.frequency("HydrosulfuricAcid")), 11, 1);
     }
 
     public static void main(String[] args) {
