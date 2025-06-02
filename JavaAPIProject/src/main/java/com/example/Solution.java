@@ -50,7 +50,14 @@ public class Solution extends Species{
                 
                 success = true;
             } catch (Exception e) {
-                e.printStackTrace();
+                if (e.getMessage() != null && e.getMessage().contains("503")) {
+                    System.out.println("Server returned 503, retrying");
+                    // Retries the Program if server fails, due to high volume 
+                } else {
+                    System.out.println("error");
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
         originalpH = pH;
