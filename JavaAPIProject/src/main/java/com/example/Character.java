@@ -1,44 +1,53 @@
 package com.example;
 
 public class Character {
-    private double maxHealth;
-    private double health;
-    private double strength;
-    private Species species;
-    private Environment environment;
 
+    // initialize character stats
+    private double maxHealth; // maximum health
+    private double health; // current health
+    private double strength; //  strength
+    private Species species; // the Species class of the character
+    private Environment environment; //  the Environment the character is in
+
+    // character constructor
     public Character(Species s, Environment env) {
-        this.species = s;
-        health = (10.0 * Math.sqrt((species.getMolecularWeight()) * 8.314)) + (species.getBoilingPoint() +273.15) * 0.08206;
-        maxHealth = health;
-        environment = env;
-        updateStrength();
+        this.species = s; // species
+        health = (10.0 * Math.sqrt((species.getMolecularWeight()) * 8.314)) + (species.getBoilingPoint() +273.15) * 0.08206; // max health calculation
+        maxHealth = health; // set max health
+        environment = env; // environment
+        updateStrength(); // strength is based off of several factors
     }
 
-    // update strength
+    // update strength (based off of factors, adds some nuance to the game)
     public void updateStrength() {
-     if (species instanceof Solution) {
-            strength = ((Solution) species).getConcentration() * (7 - ((Solution) species).getPH()) * Math.PI + ((Solution) species).getpKa();
-        } else {
-            if (species.getPhase().equals("s")) {
-                strength = species.getDensity() * 25;
-            }
-            if (species.getPhase().equals("l")) {
-                strength =  species.getHeatofCombustion() * 0.010 + species.getDensity() * 10.0;
-            }
-            if (species.getPhase().equals("g")) {
-                strength = Math.abs(environment.getPressure() * 1.2 - (species.getVP())) * 10;
-            }
-        }   
+        // if it is a solution
+        if (species instanceof Solution) {
+                // strength will be based on concentration and pH
+                strength = ((Solution) species).getConcentration() * (7 - ((Solution) species).getPH()) * Math.PI + ((Solution) species).getpKa();
+            } else {
+                // if it is a solid, it will be based on density
+                if (species.getPhase().equals("s")) {
+                    strength = species.getDensity() * 25;
+                }
+                // if it is a liquid, it will be based on heat of combustion and density
+                if (species.getPhase().equals("l")) {
+                    strength =  species.getHeatofCombustion() * 0.010 + species.getDensity() * 10.0;
+                }
+                // if it is a gas, it will be based on vapor pressure and atmospheric pressure
+                if (species.getPhase().equals("g")) {
+                    strength = Math.abs(environment.getPressure() * 1.2 - (species.getVP())) * 10;
+                }
+            }   
     }
     
 
-    // getter
+    // getter methods
     public double getMaxHealth() {return maxHealth;}
     public Species getSpecies() {return species;}
     public double getHealth() {return health;}
     public double getStrength() {return strength;}
 
+    // print method
     public String toString() {
         String str = "";
         str += "Health: " + Science.round(health, 2) +"\n";
@@ -46,115 +55,115 @@ public class Character {
         return str;
     }
 
-    // damaging & healing
+    // taking damage
     public void takeDamage(double dmg) {
+        // solids will take less damage
         if (species.getPhase().equals("s")) {
             dmg *= 0.80;
         }
         health -= dmg;
+
+        // when health drops below 0, it goes to 0 (no negatives)
         if (health <= 0) {
             health = 0;
         }
         updateStatus();
     }
-    public void heal(double health) {
-        if (health <= maxHealth) {
-            this.health += health;
-        } if (health > maxHealth) {
-            this.health = maxHealth;
-        }
-        updateStatus();
-    }
+
+    // used after most methods
     public void updateStatus() {
+        // checks and updates the phase based on the environment
         species.setPhase(environment.getTemperature());
         if (species instanceof Solution) {
+            // updates the pH if it is a solution
             ((Solution) species).getPH();
         }
     }
-
-    // moves : 
     
-    // attack character c
+    // basic attack based on strength, returns true if successful
     public boolean plainAttack(Character c) {
         c.takeDamage(strength);
-        // System.out.println("You deal " + strength + " damage to " + c.getSpecies().getName());
         return true;
     }
 
 
-    // s is the solution that is getting diluted
+    // basic dilution ONLY if both characters are solutions, returns true if dilutes successfully, otherwise return false
     public boolean dilution(Character c) {
         if (species instanceof Solution && c.getSpecies() instanceof Solution) {
+            // adds 25% of the current volume, which will increase your concentration and decrease theirs, making you stronger and them weaker
             double addedV = ((Solution) species).getVolume() * 0.25;
             ((Solution) c.getSpecies()).dilute(addedV);
             c.updateStrength();
             ((Solution) species).dilute(-1 * addedV);
             updateStrength();
-            // System.out.println("This solution has diluted the other solution with " + addedV + " L of solution, lowering their strength and increasing our strength!");
-            // System.out.println("New Strength: " + strength);
-            // System.out.println("New Concentration: " + ((Solution) species).getConcentration());
             return true;
         } else {
-            // System.out.println("This method is ineffective since " + species.getName() + " is not a solution!");
+            // if either character is not a solution, it is ineffective and false
             return false;
         }
     } 
 
-    // combustion, s is the one taking the combustion
+    // combustion, for organic substances only
     public int combust(Character c, Environment e) {
         if (species.combustable()) {
+                // 5050 chance (random 1-2)
                 int rtn = 0;
                 int randomNum = (int) (Math.random() * 2) + 1;
+                // get the damage taken first, based off of heat of combustion
                 double damageTaken = species.getHeatofCombustion() * 0.08206;
+
+                // 1 fore incomplete combustion (harming self)
                 if (randomNum == 1) {
                     takeDamage(damageTaken * 0.20);
                     c.takeDamage(damageTaken * 0.80);
-                    // System.out.println("Incomplete Combustion! Dealt " + (damageTaken * 0.20) + " damage to self and " + (damageTaken * 0.80) + " damage to " + c.getSpecies().getName());
+                    // return of 1 implemented for the GUI text
                     rtn = 1;
                 } else {
+                    // 2 for complete combustion (harming enemy)
                     c.takeDamage(damageTaken);
-                    // System.out.println("Complete Combustion! Dealt " + (damageTaken) + " damage to " + c.getSpecies().getName());
+                    // return of 2 implemented for the GUI text
                     rtn = 2;
                 }
+                // changing temperature based off of the heat and the heat capacity of air
                 e.deltaT(species.getHeatofCombustion() / (41.8)); 
-                // System.out.println("The temperature has increased by " + (species.getHeatofCombustion() / (41.8)) + ", the current temperature is " + environment.getTemperature() + "°C.");
+                // return value for GUI
                 return rtn;
         } else {
-            // System.out.println("This solution cannot be combusted!");
+            // 0 means failure
             return 0;
         }
     }
 
-    // added hydronium ions
+    // adds hydronium ions to the enemy, only if you are a solution
+    // changes pH if enemy is also a solution
+    // deals double damage if enemy is not a solution
     public boolean addAcid(Character c) {
+        // if you are a solution, continue
         if (species instanceof Solution) {
             if (((Solution) species).getAcidity().equals("acidic")) {
-                // acid adding
+                // acid adding (implemented most of the time)
                 if (c.getSpecies() instanceof Solution) {
-                    double initialPH = ((Solution) c.getSpecies()).getPH();
+                    // if enemy is also a solution, change their pH
                     ((Solution) c.getSpecies()).updatePH(1/((Solution) species).getpKa(), 0.1); 
-                    // System.out.println("Added acid to " + c.getSpecies().getName() + " changing their pH by " + (((Solution) c.getSpecies()).getPH() - initialPH));
                     return true;
                 } else {
+                    // otherwise deal double damage
                     c.takeDamage(strength * 1.25);
-                    // System.out.println(c.getSpecies().getName() + " is not a solution, so " + c.getSpecies().getName() + " takes " + (strength * 1.25) + " damage");
                     return true;
                 }
             } else {
-                // base adding
+                // NOT USED (for now)
                 if (c.getSpecies() instanceof Solution) {
                     double initialPH = ((Solution) c.getSpecies()).getPH();
                     ((Solution) c.getSpecies()).updatePH(-1/((Solution) species).getpKa(), 0.1); 
-                    // System.out.println("Added base to " + c.getSpecies().getName() + " changing their pH by " + (((Solution) c.getSpecies()).getPH() - initialPH));
                     return true;
                 } else {
                     c.takeDamage(strength * 2);
-                    // System.out.println(c.getSpecies().getName() + " is not a solution, so " + c.getSpecies().getName() + " takes " + (strength * 2) + " damage");
                     return true;
                 }
             }
+        // if you are not a solution, you cannot use this move
         } else {
-            // System.out.println(species.getName() + " is not a solution, you cannot use this move!");
             return false;
         }
     }
