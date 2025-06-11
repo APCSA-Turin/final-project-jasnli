@@ -48,6 +48,7 @@ public class GUI{
     // stats screen
     private JTable statsTable = new JTable();
     private JTable freqTable = new JTable();
+    String sortMode = "default";
 
     // timer
     Timer timer;
@@ -241,6 +242,7 @@ public class GUI{
                     // add one count to this element usage
                     String elementName = player.getSpecies().getName().replaceAll(" ", "");
                     FileSaver.addElementUse(elementName, FileLoader.frequency(elementName) + 1);
+                    System.out.println(FileLoader.frequency(elementName));
 
                     timer.start();
                 } else {
@@ -680,7 +682,7 @@ public class GUI{
     // Method for Creating the Stats Page
     private JPanel createStatsPanel() {
         // main panel for stats screen
-        JPanel panel = new JPanel(new GridLayout(3, 1));
+        JPanel panel = new JPanel(new GridLayout(4, 1));
         
 
         // name of columns
@@ -714,8 +716,32 @@ public class GUI{
             }
         });
 
+        // sort button
+        JButton sortAscending = new JButton("Sort Ascending");
+        sortAscending.setFont(new Font("Calibri", Font.PLAIN, 24));
+        sortAscending.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                sortElementUsageAscending();
+                updateElementUsage();
+            }
+        });
+        JButton sortDescending = new JButton("Sort Descending");
+        sortDescending.setFont(new Font("Calibri", Font.PLAIN, 24));
+        sortDescending.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                sortElementUsageDescending();
+                updateElementUsage();
+            }
+        });
+
+        // sort button grid
+        JPanel sortPanel = new JPanel(new GridLayout(1, 3));
+        sortPanel.add(sortAscending);
+        sortPanel.add(sortDescending);
+
         // add the table to the panel
         panel.add(scrollPane);
+        panel.add(sortPanel);
         panel.add(freqPane);
         panel.add(back);
 
@@ -1039,7 +1065,7 @@ public class GUI{
     
     // Gets the Usage of All the Elements
     private void loadElementUsage() {
-        // load the usage
+        // load the usage (default)
         String[][] usage = {
             {"Hydrogen", Integer.toString(FileLoader.frequency("Hydrogen"))},
             {"Oxygen", Integer.toString(FileLoader.frequency("Oxygen"))},
@@ -1055,24 +1081,54 @@ public class GUI{
             {"HydrosulfuricAcid", Integer.toString(FileLoader.frequency("HydrosulfuricAcid"))}
         }; 
 
+        elementUsage = usage;
+
         // initialize freq table
-        freqTable = new JTable(usage, new String[]{"Element", "Uses"});
+        freqTable = new JTable(elementUsage, new String[]{"Element", "Uses"});
     }
 
     private void updateElementUsage() {
-        // update the values (I did not want to make a new JTable everytime, so)
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Hydrogen")), 0, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Oxygen")), 1, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Sodium")), 2, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Chlorine")), 3, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Iodine")), 4, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Ethanol")), 5, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Octane")), 6, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Acetone")), 7, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("Water")), 8, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("AceticAcid")), 9, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("HydrazoicAcid")), 10, 1);
-        freqTable.setValueAt(Integer.toString(FileLoader.frequency("HydrosulfuricAcid")), 11, 1);
+        // update the values of usage (I did not want to make a new JTable everytime, so)
+        for (int i = 0 ; i < elementUsage.length ; i++) {
+            freqTable.setValueAt(Integer.toString(FileLoader.frequency(elementUsage[i][0])), i, 1);
+            freqTable.setValueAt(elementUsage[i][0], i, 0);
+        }
+    }
+
+    // Sorts the Element Usage Descending
+    private void sortElementUsageDescending() {
+        // Selection Sort
+        for (int i = 0; i < elementUsage.length - 1; i++) {
+            // Find the biggest number for each element use
+            int biggest = i;
+            for (int j = i + 1; j < elementUsage.length; j++) {
+                if (Integer.parseInt(elementUsage[j][1]) > Integer.parseInt(elementUsage[biggest][1])) {
+                    biggest = j;
+                }
+            }
+            // Swap the found biggest with the current index
+            String[] temp = elementUsage[biggest];
+            elementUsage[biggest] = elementUsage[i];
+            elementUsage[i] = temp;
+        }
+    }
+
+    // Sorts the Element Usage Ascending
+    private void sortElementUsageAscending() {
+        // Selection Sort
+        for (int i = 0; i < elementUsage.length - 1; i++) {
+            // Find the biggest number for each element use
+            int smallest = i;
+            for (int j = i + 1; j < elementUsage.length; j++) {
+                if (Integer.parseInt(elementUsage[j][1]) < Integer.parseInt(elementUsage[smallest][1])) {
+                    smallest = j;
+                }
+            }
+            // Swap the found biggest with the current index
+            String[] temp = elementUsage[smallest];
+            elementUsage[smallest] = elementUsage[i];
+            elementUsage[i] = temp;
+        }
     }
 
     public static void main(String[] args) {
