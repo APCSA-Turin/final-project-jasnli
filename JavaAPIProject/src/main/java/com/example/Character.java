@@ -74,10 +74,6 @@ public class Character {
     public void updateStatus() {
         // checks and updates the phase based on the environment
         species.setPhase(environment.getTemperature());
-        if (species instanceof Solution) {
-            // updates the pH if it is a solution
-            ((Solution) species).getPH();
-        }
     }
     
     // basic attack based on strength, returns true if successful
@@ -148,7 +144,7 @@ public class Character {
                     return true;
                 } else {
                     // otherwise deal double damage
-                    c.takeDamage(strength * 1.25);
+                    c.takeDamage(strength * 2);
                     return true;
                 }
             } else {
@@ -170,9 +166,9 @@ public class Character {
 
     // pressurize
     public boolean pressurize() {
+        // only if the character is a gas
         if (species.getPhase().equals("g")) {
             environment.deltaP(species.getVP());
-            // System.out.println("The atmospheric pressure has increased by " + species.getVP() * 0.2 + " atm. The current pressure is " + environment.getPressure() + " atm");
             return true;
         } else {
             return false;
@@ -181,18 +177,25 @@ public class Character {
 
     // end turn
     public String endTurn() {
+        // updates the status and strength
         updateStatus();
         updateStrength();
         String str = "";
+
+        // if it is a gas, it will take damage based on the pressure
         if (species.getPhase().equals("g")) {
             takeDamage(Math.abs(environment.getPressure() - 1.0) * species.getMolecularWeight() * 0.5);
             str += species.getName() + " took " + Science.round((Math.abs(environment.getPressure() - 1.0) * species.getMolecularWeight() * 0.52), 2) + " damage from the atmospheric pressure!\n";
         }
+
+        // if it is a solution, it will take damage based on the pH
         if (species instanceof Solution) {
             double originalHP = health;
             takeDamage(Math.abs((((Solution) species).getOriginalPH() - ((Solution) species).getPH())) * ((Solution) species).getConcentration() * ((Solution) species).getpKa());
             str += species.getName() + " took " + Science.round(originalHP - health, 2) + " damage from the pH imbalance!";
         }
+
+        // if it is neither, return the following messageS
         if (str.equals("")) {
             str = "No damage was taken by " + species.getName() + " from a pH imbalance nor atmospheric pressure";
         }
