@@ -30,10 +30,10 @@ public class FileLoader {
         int freq = 0;
         try (BufferedReader reader = new BufferedReader(new FileReader("elements.txt"))) {
             String line;
-            while ((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) { // while there are still lines to read
                 String[] parts = line.split(" ");
-                if (parts[0].equals(element)) {
-                    freq = Integer.parseInt(parts[1]);
+                if (parts[0].equals(element)) { // if the element matches
+                    freq = Integer.parseInt(parts[1]); // returns the frequency
                     return freq;
                 }
             }
