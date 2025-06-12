@@ -242,7 +242,7 @@ public class GUI{
                     // add one count to this element usage
                     String elementName = player.getSpecies().getName().replaceAll(" ", "");
                     FileSaver.addElementUse(elementName, FileLoader.frequency(elementName) + 1);
-                    System.out.println(FileLoader.frequency(elementName));
+                    System.out.println(elementName);
 
                     timer.start();
                 } else {
@@ -1076,9 +1076,9 @@ public class GUI{
             {"Octane", Integer.toString(FileLoader.frequency("Octane"))},
             {"Acetone", Integer.toString(FileLoader.frequency("Acetone"))},
             {"Water", Integer.toString(FileLoader.frequency("Water"))},
-            {"AceticAcid", Integer.toString(FileLoader.frequency("AceticAcid"))},
-            {"HydrazoicAcid", Integer.toString(FileLoader.frequency("HydrazoicAcid"))},
-            {"HydrosulfuricAcid", Integer.toString(FileLoader.frequency("HydrosulfuricAcid"))}
+            {"Aceticacid", Integer.toString(FileLoader.frequency("Aceticacid"))},
+            {"Hydrazoicacid", Integer.toString(FileLoader.frequency("Hydrazoicacid"))},
+            {"Hydrosulfuricacid", Integer.toString(FileLoader.frequency("Hydrosulfuricacid"))}
         }; 
 
         elementUsage = usage;
