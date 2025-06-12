@@ -11,6 +11,7 @@ import org.json.JSONArray;
 public class Data {
     public Data() {}
 
+    // specific extraction for the name of a substance due to the nature of the JSON format
     public static String extractName(JSONObject obj) {
         return (String) ((JSONObject) (obj.get("Record"))).get("RecordTitle");
     }
@@ -46,6 +47,7 @@ public class Data {
 
     }
 
+    // turn the link into a JSON object
     public static JSONObject JSONify(String link) {
         try {
             String data = API.getData(link);
@@ -58,6 +60,7 @@ public class Data {
         return null;
     }
 
+    // specific extraction of a pH value due to unique formatting
     public static double pHValue(String str) {
             String rtn = "";
             for (int i = str.length() - 1; i >= 0; i--) {
@@ -71,6 +74,7 @@ public class Data {
             return Double.parseDouble(rtn);
     }
 
+    // specific extraction of a value for the FIRST number and commas
     public static double valueConditions(String str) {
         String rtn = "";
         boolean detected = false;
@@ -88,7 +92,7 @@ public class Data {
         return Double.parseDouble(rtn);
     }
 
-    // returns the str before the semicolon
+    // specific extraction of a value for the number before a semicolon
     public static double valueSemi(String str) {
         String rtn = "";
         for (int i = 0; i < str.length(); i++) {
@@ -104,13 +108,15 @@ public class Data {
         return Double.parseDouble(rtn);
     }
 
-    // returns the str with only double numbers
+    // returns the str with case before the letter F
     public static double value(String str) {
         String rtn = "";
         for (int i = 0; i < str.length(); i++) {
+            // adds numbers or decimal points to the return
             if (isNumeric(str.substring(i, i + 1)) || str.substring(i, i + 1).equals(".") || str.substring(i, i+1).equals("-")) {
                 rtn += str.substring(i, i+1);
             }
+            // if it detects an F, immediate return
             if (str.substring(i, i+1).equals("F")) {
                 return Double.parseDouble(rtn);
             }
@@ -122,6 +128,7 @@ public class Data {
     public static int number(String str) {
         String rtn = "";
         for (int i = 0; i < str.length(); i++) {
+            // adds only numbers to the return
             if (isNumeric(str.substring(i, i + 1))) {
                 rtn += str.substring(i, i+1);
             }
