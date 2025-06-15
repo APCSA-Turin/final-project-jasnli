@@ -82,7 +82,6 @@ public class Character {
         return true;
     }
 
-
     // basic dilution ONLY if both characters are solutions, returns true if dilutes successfully, otherwise return false
     public boolean dilution(Character c) {
         if (species instanceof Solution && c.getSpecies() instanceof Solution) {
